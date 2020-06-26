@@ -1,7 +1,8 @@
 
 LR = 0.001  # Learning Rate for Optimizer
 WD = 0.0001  # Weight decay value for Optimizer
-
+CIFAR_CLASSES = 10
+GTSRB_CLASSES = 43
 DISPLAY_EPOCH = 50  # Display every count
 
 '''
