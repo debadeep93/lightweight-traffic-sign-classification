@@ -64,13 +64,13 @@ class Stage(nn.Module):
         super(Stage, self).__init__()
 
         self.activation_function = nn.ReLU()
-        self.batch_norm = nn.BatchNorm2d(k)
+        self.batch_norm = nn.BatchNorm2d(constants.K)
 
         self.cnn1 = nn.Conv2d(in_channels=stage_in,
-                              out_channels=k, kernel_size=1,
+                              out_channels=constants.K, kernel_size=1,
                               stride=1)
 
-        self.cnn2 = nn.Conv2d(in_channels=7 * k,
+        self.cnn2 = nn.Conv2d(in_channels=7 * constants.K,
                               out_channels=stage_out, kernel_size=1,
                               stride=1)
 
@@ -104,10 +104,10 @@ class Stage(nn.Module):
 class TeacherNetwork(nn.Module):
     '''
     Finally, we define the teacher network which consists of 4 stage modules connected
-    in a dense fashion, with each stage producing a 'k' feature maps where 'k' is the
+    in a dense fashion, with each stage producing a 'constants.K' feature maps where 'constants.K' is the
     growth rate of the network.
-    Stage 0 takes the input tensor which has 3 x H X W tensor and outputs a k x H x W
-    tensor. The remaining Stages take 'k' feature maps as input and output 'k' feature
+    Stage 0 takes the input tensor which has 3 x H X W tensor and outputs a constants.K x H x W
+    tensor. The remaining Stages take 'constants.K' feature maps as input and output 'constants.K' feature
     maps
 
     Finally, the Stage 3 output is pooled using a 3 x 3 max pooling with stride of 2
@@ -115,7 +115,7 @@ class TeacherNetwork(nn.Module):
     for classification.
     '''
 
-    def __init__(self, cell_onnections_in, cell_connections_out, stage_connections_in, stage_connections_out):
+    def __init__(self, cell_onnections_in, cell_connections_out, stage_connections_in, stage_connections_out,num_classes):
         super(TeacherNetwork, self).__init__()
 
         self.stages = nn.ModuleList([Stage(cell_onnections_in,
@@ -126,7 +126,7 @@ class TeacherNetwork(nn.Module):
 
         self.max_pool = torch.nn.MaxPool2d(kernel_size=2, stride=2)
         self.activation_function = nn.ReLU()
-        self.linear = nn.Linear(in_features=131072, out_features=constants.CIFAR_CLASSES)
+        self.linear = nn.Linear(in_features=131072, out_features=num_classes)
 
     def forward(self, x):
         stage_results = []
