@@ -8,6 +8,9 @@ In [1], Zhang et. al. proposed two unique lightweight networks that can obtain h
 
 ## Related Work
 
+There are existing deep neural networks which can identify objects, and specifically traffic signs, with significant accuracy. Traditional traffic sign classification networks which use ELM or SVM for feature classes use handcrafted features which results in significant loss of information. CNNs like MSCNN, MCDNN, CNN-ELM take advatage of traditional learning classifiers and achieve greater recognition rate as compared to the traditional methods. CNN-HLSGD trains a CNN with hinge loss and achieves a recognition rate on the GTSRB dataset better than that of most methods.
+
+Though these networks perform very well on the traffic sign classification task, they are not suitable to be deployed in a resource-constrained environment with reduced computing power and storage space. A possible solution to this challenge is to compress these heavy CNNs using five different methods: low-rank, pruning, quantization, knowledge distillation, and compact network design. In [1], the authors design two networks which take advantage of the network compression techniques resulting in lightweight networks with fewer trainable parameters.
 
 ## Dataset
 
@@ -20,6 +23,9 @@ In [1], Zhang et. al. proposed two unique lightweight networks that can obtain h
 ## Results
 
 ## Challenges Faced
+
+### Training the teacher model
+The major challenge we faced was in the training of the teacher model. Google Colab spec, local machines specs.
 
 ## Inference
 
