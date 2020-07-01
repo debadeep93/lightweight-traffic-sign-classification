@@ -59,7 +59,7 @@ The student network has a simple end-to-end architecture consisting of five conv
 
 ### Knowledge Distillation
 
-Knowledge obtained from the teacher network is transferred to the student network through the process of knowledge distillation. An overview of the knowledge distillation process is given in figure 8. The softened output of the teacher network is used to train the student network on the target datasets. Consider the training sets to be represented as $$D = {X = {x_1, x_2,..., x_n}, {Y = {y_1, y_2,..., y_n}}$$, where $$x$$ and $$y$$ represent an input and a target output respectively. The output of the teacher model and the student model can be represented as $$t = teacher(x)$$ and $$s = student(x)$$ respectively. The student model minimizes the knowledge distillation loss function defined below:
+Knowledge obtained from the teacher network is transferred to the student network through the process of knowledge distillation. An overview of the knowledge distillation process is given in figure 8. The softened output of the teacher network is used to train the student network on the target datasets. Consider the training sets to be represented as $$ D = \{X = \{x_1, x_2,..., x_n\}, \{Y = \{y_1, y_2,..., y_n\}\} $$, where $$x$$ and $$y$$ represent an input and a target output respectively. The output of the teacher model and the student model can be represented as $$t = teacher(x)$$ and $$s = student(x)$$ respectively. The student model minimizes the knowledge distillation loss function defined below:
 <div align="center">$$ L_{KD} = (1-\alpha)L_{CE}(y, \sigma(s)) + 2T^2\alpha L_{CE}(\sigma(\frac{t}{T}), \sigma(\frac{s}{T})$$</div>
 where $$\alpha$$ is a hyperparameter that controls the ratio of the two terms and $$Ta$$ is a temperaturue parameter, $$\sigma()$$ is the softmax function  and $$L_{CE}$$ is a standard cross-entropy loss function.
 
@@ -76,7 +76,7 @@ Another advantage is that since the student network is guided by the teacher net
 *Figure 9: Teacher-student convergence space*
 ### Hyperparameters
 
-We have used the same hyperparameters as the authors. For knowledge distillation, we set $$T$$ to 20 and $$\alpha$$ to 0.9 for optimal results.
+We have used the same hyperparameters as the authors. For knowledge distillation, we set $$T$$ to 20 and $$\alpha$$ to 0.9 for optimal results. The learning rate is set to 0.001, and individual adaptive learning rates are computed using the Adam method. We also use a weight decay of 10<sup>-5</sup>.
 
 ## Experiment
 
@@ -84,18 +84,24 @@ We have used the same hyperparameters as the authors. For knowledge distillation
 
 ### Modifications to the architecture
 
-### 
+### Running on Google Colab with a GPU
 
+### Running on Google Colab with a TPU  
+To train the models with the batch size mentioned in the paper, we took advantage of the Google Colab TPU offering. The changes to our teacher training model notebook were not trivial. The main processes spawns 8 child processes, which is the number of cores in the TPU, and training data is loaded onto each of the devices using a distributed sampler. The training took around 50 hours, and achieved accuracy comparable to the models trained on the GPU. The only significant difference we noticed was the performance improvement and the faster training time on the TPU. The notebook is available [here](notebooks/g20_teacher_net_TPU.ipynb).
 
 ## Results
 
 ## Challenges Faced
 
 ### Training the models
-The major challenge we faced was in the training of the teacher model. Google Colab spec, local machines specs.
+The major challenge we faced was in the training of the teacher model. The authors have performed their experiments with PyTorch on a Linux PC with an Intel® Xeon(R), CPU E5-2670 v3@2.30 GHz×24 and an NVIDIA TITAN X, 12 GB RAM. We attempted to replicate their experiment on a Windows PC with Intel® Core™ i7-9750H CPU @ 2.60GHz and NVIDIA GeForce RTX 2060 with a batch size of 128, but were faced with a CUDA out-of-memory error. We faced the same issue when we reduced the batch size to 64. We could run the model only with a batch size of 32 for 300 epochs but this led to an abysmal accuracy of 18%. We had requested access to the university high performance cluster, but were given only 1 GPU limit and were similarly unable to completely run train the teacher network on the cluster either. We were finally able to train the model on the GTSRB dataset by running the model on Google Colab in 12-hour batches with a reduced batch size of 64. Google Colab has usage limits where a user is given a cool-off period if they utilize GPU-intensive resources for 12-hours, and due to this it took us more than 4 days to train the model. We were only able to train with a batch-size of 128 when we run the model in Google Colab on an 8-core Tensor Processing Unit(TPU) using multiprocessing, which took approximately 4-5 days.
 
 ### Limitations
-Handling class skew
+
+One of the limitations of our approach is that we do not account for the class skew in the GTSRB dataset, which could potentially introduce a bias in our models. A distribution of the classes in the dataset is given in figure 10.
+
+![Figure 10: Distribution of classes in the GTSRB Dataset](assets/class_distribution.png)
+*Figure 10: Distribution of classes in the GTSRB Dataset*
 
 ## Inference
 
