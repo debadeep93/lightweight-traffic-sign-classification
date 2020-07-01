@@ -34,6 +34,8 @@ The teacher network is usually a complex and deep network which is fully trained
 
 The architecture of the teacher network is shown in figure 4. It consists of two 1x1 convolutional filters that are used to reduce the number of channels of the input feature maps. Using 1x1 instead of 3x3 kernels reduces the number of parameters by one-ninth, while also increasing the non-linearity of the network without changing the size of the feature maps, thereby deepening the network. This is depicted in figure 5, which shows the network's stage module. Inside each cell, the input is spliced and there is a 1x1 kernel and a 3x3 kernel that perform convolutional operations in parallel. The output is then concatenated and passed on to the next layer. The cell operations can be visualized in figure 6. From the architecture of the teacher network, we can observe that there are six cells that are used to connect the different layers and taking advantage of the feature maps of each layer while also accumulating the characteristics of each channel. This relieves us of the vanishing gradient problem. As part of the convolutional operations, batch normalization and ReLU functions are performed in each layer to further avoid the vanishing gradient and gradient explosion problems while also incresing the degree of non-linearity in the network. At the end of stage 3, a 2x2 maxpooling operation is done followed by a linear layer which fully connects all neurons from the penultimate layer to the classfication layer.
 
+The teacher network is trained to converge on the same training set as the student network. The parameters of the teacher network are not updated during the training of the student model, as they only guide the updating of the student network parameters. The performance of the student network is dependent on the performance of the teacher network, so if the teacher network has a low accuracy on the training set, it is difficult to guide the student model to update parameters, and the student model may get stuck in a local optima.
+
 ![Figure 4: Architecture of the teacher network](assets/Teacher_architecture.jpeg)
 
 ![Figure 5: A stage module](assets/stage_module.jpeg)
@@ -42,19 +44,33 @@ The architecture of the teacher network is shown in figure 4. It consists of two
 
 ### Student Network
 
-The student network has a simple end-to-end architecture consisting of five convolutional layers and a fully connected layer. Each type of convolutional filter in a convolutional layer are used to extract specific features of an image. Similar to the teacher network, a batch normalization layer and a ReLU layer are added in each convolutional layer to increase the non-linearity in the network. Max-pooling layers are used after the second and fourth convolutional layers to obtain textural features and an average pooling layer is used after the final convolutional layer to preserve the information of the input feature maps. The pooling layers also prevent overfitting and reduce the dimensionality of the feature maps. Finally, there is a fully connected layer or the classifier layer that transfers the feature vectors into a target class probability. The optimizer used to update weights and bias during the training is the Adam optimizer.
+The student network has a simple end-to-end architecture consisting of five convolutional layers and a fully connected layer. Each type of convolutional filter in a convolutional layer are used to extract specific features of an image. Similar to the teacher network, a batch normalization layer and a ReLU layer are added in each convolutional layer to increase the non-linearity in the network. Max-pooling layers are used after the second and fourth convolutional layers to obtain textural features and an average pooling layer is used after the final convolutional layer to preserve the information of the input feature maps. The pooling layers also prevent overfitting and reduce the dimensionality of the feature maps. Finally, there is a fully connected layer or the classifier layer that transfers the feature vectors into a target class probability. The optimizer used to update weights and bias during the training is the Adam optimizer. The student network learns low-level information like texture from the low-level convolutional features, whole learning semantic information from the high-level convolutional layers. Figure 7 gives an overview of the student network.
+
+![Figure 7: An overview of the student network](assets/student_network.png)
 
 ### Knowledge Distillation
 
-Knowledge obtained from the teacher network is transferred to the student network through the process of knowledge distillation. An overview of the knowledge distillation process is given in figure 7. The softened output of the teacher network is used to train the student network on the target datasets. Consider the training sets to be represented as $$D = {X = {x_1, x_2,..., x_n}, {Y = {y_1, y_2,..., y_n}}$$, where $$x$$ and $$y$$ represent an input and a target output respectively. The output of the teacher model and the student model can be represented as $$t = teacher(x)$$ and $$s = student(x)$$ respectively. The student model minimizes the knowledge distillation loss function defined below:
+Knowledge obtained from the teacher network is transferred to the student network through the process of knowledge distillation. An overview of the knowledge distillation process is given in figure 8. The softened output of the teacher network is used to train the student network on the target datasets. Consider the training sets to be represented as $$D = {X = {x_1, x_2,..., x_n}, {Y = {y_1, y_2,..., y_n}}$$, where $$x$$ and $$y$$ represent an input and a target output respectively. The output of the teacher model and the student model can be represented as $$t = teacher(x)$$ and $$s = student(x)$$ respectively. The student model minimizes the knowledge distillation loss function defined below:
 <div align="center">$$ L_{KD} = (1-\alpha)L_{CE}(y, \sigma(s)) + 2T^2\alpha L_{CE}(\sigma(\frac{t}{T}), \sigma(\frac{s}{T})$$</div>
 where $$\alpha$$ is a hyperparameter that controls the ratio of the two terms and $$Ta$$ is a temperaturue parameter, $$\sigma()$$ is the softmax function  and $$L_{CE}$$ is a standard cross-entropy loss function.
 
-![Figure 7: Knowledge Distillation Process](assets/knowledge_distillation.png)
+![Figure 8: Knowledge Distillation Process](assets/knowledge_distillation.png)
 
 ### Advantages of the Teacher-Student Architecture
 
+One of the advantages of the teacher student architecture is that the student network only learns the most significant information from the teacher model. The student learns a one-hot class label directly from the traffic sign learning. Stating the example given in the paper, consider an object classification network trained to recognize a car, a cat or a dog, and the likely probabilities of an object being one of these three is [0.05, 0.9, 0.6]. This is a softened output, and since cars are more different that cats or dogs, the difference between the second and the third probablities is smaller than the difference between the first and the second. Since this information only makes a minimal contribution to the weights update, the temperature parameter T is increased to help transfer the knowledge to the student model. 
+
+Another advantage is that since the student network is guided by the teacher network, its convergence space becomes significantly smaller as compared to a model learning directly from a dataset. A visualization is shown in figure 9. The search space is much larger for a traditional network trained directly on a training dataset. We assume that convergence similar to the teacher network can be achieved by the student network too, and so the convergence space of the teacher and student network should overlap. The student network can also have convergence different than that of the teacher network, but given that the student network is guided by the teacher network, the convergence space of the student network will signigicantly overlap with the convergence space of the teacher network.
+
+![Figure 9: Teacher-student convergence space](assets/teacher-student_convergence_space.png)
+
+### Hyperparameters
+
+We have used the same hyperparameters as the authors. For knowledge distillation, we set $$T$$ to 20 and $$\alpha$$ to 0.9 for optimal results.
+
 ## Experiment
+
+
 
 ## Results
 
@@ -83,7 +99,5 @@ Real time from video
 
 [3] An Efficient Traffic Sign Recognition Approach Using a Novel Deep Neural Network Selection Architecture: Proceedings of IEMIS 2018, Volume 3 - Scientific Figure on ResearchGate. Available from: https://www.researchgate.net/figure/Overview-of-the-GTSRB-Dataset_fig1_327389916 [accessed 30 Jun, 2020]
 
-[4] Krizhevsky A (2009) Learning multiple layers of features from tiny
-images. Technical Report TR–2009, University of Toronto. http://
-www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf.
-Accessed 30 Jun 2020
+[4] Krizhevsky A (2009) Learning multiple layers of features from tiny images. Technical Report TR–2009, University of Toronto. http://
+www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf. Accessed 30 Jun 2020
