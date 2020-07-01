@@ -76,7 +76,7 @@ Another advantage is that since the student network is guided by the teacher net
 *Figure 9: Teacher-student convergence space*
 ### Hyperparameters
 
-We have used the same hyperparameters as the authors. For knowledge distillation, we set $$T$$ to 20 and $$\alpha$$ to 0.9 for optimal results. The learning rate is set to 0.001, and individual adaptive learning rates are computed using the Adam method. We also use a weight decay of 10<sup>-5</sup>.
+We have used the same hyperparameters as the authors. For knowledge distillation, we set $$T$$ to 20 and $$\alpha$$ to 0.9 for optimal results. The learning rate is set to 0.001, and individual adaptive learning rates are computed using the Adam method. We use a weight decay of 10^<sup>-5</sup>.
 
 ## Experiment
 
@@ -87,7 +87,7 @@ We have used the same hyperparameters as the authors. For knowledge distillation
 ### Running on Google Colab with a GPU
 
 ### Running on Google Colab with a TPU  
-To train the models with the batch size mentioned in the paper, we took advantage of the Google Colab TPU offering. The changes to our teacher training model notebook were not trivial. The main processes spawns 8 child processes, which is the number of cores in the TPU, and training data is loaded onto each of the devices using a distributed sampler. The training took around 50 hours, and achieved accuracy comparable to the models trained on the GPU. The only significant difference we noticed was the performance improvement and the faster training time on the TPU. The notebook is available [here](notebooks/g20_teacher_net_TPU.ipynb).
+To train the models with the batch size mentioned in the paper, we took advantage of the Google Colab TPU offering. The changes to our teacher training model notebook were not trivial. The main processes spawns 8 child processes, which is the number of cores in the TPU, and training data is loaded onto each of the devices using a distributed sampler. The training took around 50 hours, and achieved accuracy comparable to the models trained on the GPU. The only significant difference we noticed was the performance improvement and the faster training time on the TPU. The notebook is available [here](https://github.com/RPraneetha/lightweight-traffic-sign-classification/blob/master/notebooks/g20_teacher_net_TPU.ipynb).
 
 ## Results
 
@@ -96,22 +96,24 @@ To train the models with the batch size mentioned in the paper, we took advantag
 ### Training the models
 The major challenge we faced was in the training of the teacher model. The authors have performed their experiments with PyTorch on a Linux PC with an Intel® Xeon(R), CPU E5-2670 v3@2.30 GHz×24 and an NVIDIA TITAN X, 12 GB RAM. We attempted to replicate their experiment on a Windows PC with Intel® Core™ i7-9750H CPU @ 2.60GHz and NVIDIA GeForce RTX 2060 with a batch size of 128, but were faced with a CUDA out-of-memory error. We faced the same issue when we reduced the batch size to 64. We could run the model only with a batch size of 32 for 300 epochs but this led to an abysmal accuracy of 18%. We had requested access to the university high performance cluster, but were given only 1 GPU limit and were similarly unable to completely run train the teacher network on the cluster either. We were finally able to train the model on the GTSRB dataset by running the model on Google Colab in 12-hour batches with a reduced batch size of 64. Google Colab has usage limits where a user is given a cool-off period if they utilize GPU-intensive resources for 12-hours, and due to this it took us more than 4 days to train the model. We were only able to train with a batch-size of 128 when we run the model in Google Colab on an 8-core Tensor Processing Unit(TPU) using multiprocessing, which took approximately 4-5 days.
 
+## Inference
+
 ### Limitations
 
 One of the limitations of our approach is that we do not account for the class skew in the GTSRB dataset, which could potentially introduce a bias in our models. A distribution of the classes in the dataset is given in figure 10.
 
-![Figure 10: Distribution of classes in the GTSRB Dataset](assets/class_distribution.png)
+![Figure 10: Distribution of classes in the GTSRB Dataset](assets/class_distribution_GTSRB.png)
 *Figure 10: Distribution of classes in the GTSRB Dataset*
-
-## Inference
 
 ## Future Work
 
-Network Pruning
+Some of the potential future work for our project, including ways the architecture can be improved are outlined below:
 
-Data augmentation
+* Network Pruning is a common method to compress large networks and reduce the number of trainable parameters. Network pruning reduces the number of trainable parameters by removing redundant parameters in the network. 
 
-Real time from video
+* Data augmentation - The data can be augmented by performing operations like rotations and translations. The images in the GTSRB dataset are low-resolution images with poor contrast. This can be improved upon with data augmentation and the results from the models trained on the augmented dataset can be compared with the original models.
+
+* Real time from video - The network can be further extended to recognize traffic signs from video clips in real-time. The network can also be mounted as a protoype on an autonmous vehicle to test the real-life applicability and viability of the models. This also gives us an opportunity to test the performance of the network in the real-world.
 
 ## References
 [1] Zhang, J., Wang, W., Lu, C. et al. Lightweight deep network for traffic sign classification. Ann. Telecommun. (2019). https://doi.org/10.1007/s12243-019-00731-9
