@@ -16,7 +16,7 @@ Though these networks perform very well on the traffic sign classification task,
 
 ## Dataset
 
-The paper uses the German Traffic Sign Recognition Benchmark dataset which is a multi-class, single-image dataset consisting of more than 50,000 images with unique physical traffic sign instances. Since the images are of actual real-life traffic signs, the images also reflect real-life image identification challenges like varying perspectives, shades, lighting conditions and colour degradation. A sample of the dataset is shown in figure 1. The dataset is split into training and test sets with 39,209 images in the training set and 12,630 images.
+The paper uses the German Traffic Sign Recognition Benchmark dataset which is a multi-class, single-image dataset consisting of more than 50,000 images with unique physical traffic sign instances. Since the images are of actual real-life traffic signs, the images also reflect real-life image identification challenges like varying perspectives, shades, lighting conditions and colour degradation. A sample of the dataset is shown in figure 1. The dataset is split into training and test sets with 39,209 images in the training set and 12,630 images in the test set.
 
 ![Figure 1: A sample of the GTSRB dataset<sup>[10]</sup>](assets/Overview-of-the-GTSRB-Dataset.png?raw=true)
 *Figure 1: A sample of the GTSRB dataset<sup>[10]</sup>*
@@ -76,15 +76,90 @@ Another advantage is that since the student network is guided by the teacher net
 *Figure 9: Teacher-student convergence space*
 ### Hyperparameters
 
-We have used the same hyperparameters as the authors. For knowledge distillation, we set $$T$$ to 20 and $$\alpha$$ to 0.9 for optimal results. The learning rate is set to 0.001, and individual adaptive learning rates are computed using the Adam method. We also use a weight decay of 10<sup>-5</sup>.
+We have used the same hyperparameters as the authors. For knowledge distillation, we set $$T$$ to 20 and $$\alpha$$ to 0.9 for optimal results. The learning rate is set to 0.001, and individual adaptive learning rates are computed using the Adam method with a weight decay of 10<sup>-5</sup>.
 
 ## Experiment
 
 ### Data Preprocessing 
 
-### Modifications to the architecture
+Before we started using the German Traffic Sign Recognition Dataset, there was some amount of pre-processing required to be accessed through the Dataloader class of torchvision in PyTorch module. For this purpose, we make use of a publicly available code which loads the GTSRB data into a wrapped torchvision Dataset. The loader can be found [here.](https://github.com/tomlawrenceuk/GTSRB-Dataloader) The loader overrides the torchvision Dataset class and loads the respective training and test sets into the dataframe and produces a Dataset containing the images and the class Ids of the data. Using the Dataloader class, we then load the processed data into mini-batches of batch-size = 64, using the overloaded GTSRB class.
+
+### Implemented Network Architecture
+
+Due to resource constraints on our individual machines, we decided to reduce the feature maps in the network described in the base paper. 
+
+For the teacher network, we used a growth rate of k = 64 between the cells and the stages. What this means, is that each cell module outputs 'k' or 64 feature maps which are then densely connected to the remaining cells in the stage. Similarly, the final 1 x 1 convolutional layer also produces 'k' or 64 feature maps which are also densely connected to the subsequent stages. Our network contains 32 convolutional layers and 3823339 (~3.8 million) trainable parameters. Due to its reduced growth size, its significantly lesser than the number of parameters cited by the authors ~ 7.3 million. The Stage, Pooling and Linear layers are described below:
+
+| Layer   | Type    | In-filters | Out-filters | h  | w  | Kernel | Stride | Padding |
+|---------|---------|------------|-------------|----|----|--------|--------|---------|
+| Stage-0 | Conv1   | 3          | 64          | 32 | 32 | 1      | 1      | 0       |
+| Stage-0 | Conv2   | 448        | 64          | 32 | 32 | 1      | 1      | 0       |
+| Stage-1 | Conv1   | 64         | 64          | 32 | 32 | 1      | 1      | 0       |
+| Stage-1 | Conv2   | 448        | 64          | 32 | 32 | 1      | 1      | 0       |
+| Stage-2 | Conv1   | 128        | 64          | 32 | 32 | 1      | 1      | 0       |
+| Stage-2 | Conv2   | 448        | 64          | 32 | 32 | 1      | 1      | 0       |
+| Stage-3 | Conv1   | 192        | 64          | 32 | 32 | 1      | 1      | 0       |
+| Stage-3 | Conv2   | 448        | 64          | 32 | 32 | 1      | 1      | 0       |
+| Pooling | Maxpool | 256        | -           | 16 | 16 | 2      | 2      | 0       |
+| FC      | Linear  | 65536      | 43          | -  | -  | -      | -      | -       |
+
+The stages also contain six densely connected cells between the two convolutional layers(Conv1 and Conv2), which are described below:
+
+| Layer | Type  | In-filters | Out-filters | h  | w  | Kernel | Stride | Padding |
+|-------|-------|------------|-------------|----|----|--------|--------|---------|
+| Cell0 | Conv1 | 32         | 32          | 32 | 32 | 1      | 1      | 0       |
+| Cell0 | Conv3 | 32         | 32          | 32 | 32 | 3      | 1      | 1       |
+| Cell1 | Conv1 | 64         | 32          | 32 | 32 | 1      | 1      | 0       |
+| Cell1 | Conv3 | 64         | 32          | 32 | 32 | 3      | 1      | 1       |
+| Cell2 | Conv1 | 96         | 32          | 32 | 32 | 1      | 1      | 0       |
+| Cell2 | Conv3 | 96         | 32          | 32 | 32 | 3      | 1      | 1       |
+| Cell3 | Conv1 | 128        | 32          | 32 | 32 | 1      | 1      | 0       |
+| Cell3 | Conv3 | 128        | 32          | 32 | 32 | 3      | 1      | 1       |
+| Cell4 | Conv1 | 160        | 32          | 32 | 32 | 1      | 1      | 0       |
+| Cell4 | Conv3 | 160        | 32          | 32 | 32 | 3      | 1      | 1       |
+| Cell5 | Conv1 | 192        | 32          | 32 | 32 | 1      | 1      | 0       |
+| Cell5 | Conv3 | 192        | 32          | 32 | 32 | 3      | 1      | 1       |
+
+
+For our experiments, we also train two different student networks using the Knowledge Distillation process described earlier. We used the 50% pruned student network described in the base paper as the student model to train. The student model thus formed has 5 convolutional layers, 2 max pooling layers, 1 average pooling layer and a fully connected linear layer, with only ~ 3.2 x 10<sup>5 parameters. The description of the network is provided below:
+
+| Layer   | in-filters | out-filters | h  | w  | kernel | stride | Pad |
+|---------|------------|-------------|----|----|--------|--------|-----|
+| Conv1   | 3          | 32          | 32 | 32 | 3      | 1      | 1   |
+| Conv2   | 64         | 32          | 32 | 32 | 3      | 1      | 1   |
+| Maxpool | 64         |             | 16 | 16 | 2      | 2      | 0   |
+| Conv4   | 64         | 64          | 16 | 16 | 3      | 1      | 1   |
+| Conv5   | 64         | 64          | 16 | 16 | 3      | 1      | 1   |
+| Maxpool | 64         |             | 8  | 8  | 2      | 2      | 0   |
+| Conv7   | 128        | 128         | 8  | 8  | 3      | 1      | 1   |
+| AvgPool | 128        |             | 4  | 4  | 2      | 2      | 0   |
+| FC      | 2048       | 43          |    |    |        |        |     |
+
+The second student network created was a shallower model containing 3 Convolutional Layers, 2 Max Pooling layers and a fully connected layer,  with only ~ 1.2 x 10<sup>5 parameters. The description of the network is provided below:
+
+| Layer   | in-filters | out-filters | h  | w  | kernel | stride | Pad |
+|---------|------------|-------------|----|----|--------|--------|-----|
+| Conv1   | 3          | 32          | 32 | 32 | 3      | 1      | 1   |
+| Conv2   | 32         | 64          | 32 | 32 | 3      | 1      | 1   |
+| Maxpool | 64         |  -          | 16 | 16 | 2      | 2      | 0   |
+| Conv3   | 64         | 32          | 16 | 16 | 3      | 1      | 1   |
+| Maxpool | 32         |  -          | 8  | 8  | 2      | 2      | 0   |
+| FC      | 2048       | 43          |  - |  - |  -     |  -     |  -  |
+
+
+##$ Implementing the Loss Function
+
+For the teacher network, we use Cross Entropy Loss between the predicted outputs and the target labels of the training dataset.
+
+The loss function for Knowledge Distillation as described earlier uses Cross-Entropy Loss between the softmax teacher output and the softmax of student outputs. However, after initially trying to implement this using Pytorch's Cross Entropy Loss function, we realised that accepts softmax outputs and scalar target labels as parameters which did not fit our requirements. To overcome this problem, we made use of KL Divergence which takes softmax probabilities and log of softmax probabilities as input parameters. The KL Divergence loss and Cross Entropy Loss between the student output and target labels are added to compute the Knowledge Distillation Loss for the student network's training.
 
 ### Running on Google Colab with a GPU
+
+We first trained the Teacher model on a Tesla K80 GPU on Google Colab with a batch size of 64 for 501 epochs. The trained model is then saved to be used later for the training of the student network using knowledge distillation. We validate the teacher model on the test set during every epoch of its run and plot the loss and accuracy curves. We also compute the confusion matrix of the trained teacher model and compute the True Positives, True Negatives, False Positives, False Negatives, Precision, Recall, F1 Score and Accuracy of the network for the individual classes in the test set. 
+
+The trained teacher model is also used to train the student networks using Knowledge distillation. We load the teacher model and store its predicted labels on the training set and use the labels to train the student network. We train the two student network with a batch size of 64, for 200 and 140 epochs respectively with a learning rate of 0.001 and hyperparameters $$\alpha = 0.9$$ and $$T = 20$$. We validate the teacher network against the test set at every epoch and plot the results. For the student network described in the paper, we also compute the confusion matrix and report its true positives, true negatives, false positives, false negatives, precision, recall, F1 Score and accuracy for the individual classes.
+
+The results of these are discussed further in the Results section.
 
 ### Running on Google Colab with a TPU  
 To train the models with the batch size mentioned in the paper, we took advantage of the Google Colab TPU offering. The changes to our teacher training model notebook were not trivial. The main processes spawns 8 child processes, which is the number of cores in the TPU, and training data is loaded onto each of the devices using a distributed sampler. The training took around 50 hours, and achieved accuracy comparable to the models trained on the GPU. The only significant difference we noticed was the performance improvement and the faster training time on the TPU. The notebook is available [here](notebooks/g20_teacher_net_TPU.ipynb).
