@@ -1,0 +1,17 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+em {
+    display: block;
+    text-align: center;
+}
+
+p img
+{
+    display: block !important;
+    float: none; 
+    margin: auto;
+    max-width: 640px;
+}

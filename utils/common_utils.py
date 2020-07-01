@@ -42,7 +42,7 @@ def validate(model,data):
     correct = 0
     with torch.no_grad():
         for i,(images,labels) in enumerate(data):
-            images = var(images.to(device))
+            images = var(images.cuda())
             x = model.forward(images)
             value,pred = torch.max(x,1)
             pred = pred.data.cpu()
@@ -72,9 +72,9 @@ def load_datasets(dataset_type):
             root_dir='./data/', train=False,  transform=transform)
 
         train_set = torch.utils.data.DataLoader(
-            train_data, batch_size=K, shuffle=True, num_workers=0)
+            train_data, batch_size=K, shuffle=True, num_workers=2)
         test_set = torch.utils.data.DataLoader(
-            test_data, batch_size=K, shuffle=False, num_workers=0)
+            test_data, batch_size=K, shuffle=False, num_workers=2)
 
     elif dataset_type == CIFAR_10_DATASET:
         transform = transforms.Compose(
@@ -86,9 +86,9 @@ def load_datasets(dataset_type):
                                                  download=True, transform=transform)
 
         train_set = torch.utils.data.DataLoader(train_data, batch_size=K,
-                                                shuffle=True, num_workers=0)
+                                                shuffle=True, num_workers=2)
         test_set = torch.utils.data.DataLoader(test_data, batch_size=K,
-                                               shuffle=False, num_workers=0)
+                                               shuffle=False, num_workers=2)
 
     return train_set, test_set
 

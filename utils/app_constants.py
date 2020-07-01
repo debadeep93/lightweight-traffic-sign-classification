@@ -7,7 +7,7 @@ DISPLAY_BATCH = 50  # Display every count
 GTSRB_DATASET = 1
 CIFAR_10_DATASET = 2
 
-SAVE_N = 10
+SAVE_N = 10 
 SAVE_PATH = "./saved_models/teacher_saved.pth"
 
 '''
