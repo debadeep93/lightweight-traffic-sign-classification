@@ -16,17 +16,17 @@ Though these networks perform very well on the traffic sign classification task,
 
 The paper uses the German Traffic Sign Recognition Benchmark dataset which is a multi-class, single-image dataset consisting of more than 50,000 images with unique physical traffic sign instances. Since the images are of actual real-life traffic signs, the images also reflect real-life image identification challenges like varying perspectives, shades, lighting conditions and colour degradation. A sample of the dataset is shown in figure 1. The dataset is split into training and test sets with 39,209 images in the training set and 12,630 images.
 
-![Figure 1: A sample of the GTSRB dataset[3]](/_assets/Overview-of-the-GTSRB-Dataset.png?raw=true)
+![Figure 1: A sample of the GTSRB dataset[3]](assets/Overview-of-the-GTSRB-Dataset.png?raw=true)
 
 We have also trained our teacher model on the CIFAR-10[4] dataset which consists of 60000 32x32 colour images in 10 classes, with 6000 images per class. There are 50000 training images and 10000 test images. Figure 2 shows the classes in the dataset, along with 10 images from each class.
 
-![Figure 2: Classes from the CIFAR-10 dataset](/_assets/cifar-10.png?raw=true)
+![Figure 2: Classes from the CIFAR-10 dataset](assets/cifar-10.png?raw=true)
 
 ## Network Architecture
 
 The authors of this paper have designed two novel lightweight networks for the traffic sign classification task. To summarize, the network primarily consists of a large neural network called the teacher model which is trained on the GTSRB dataset and transfers its knowledge to a smaller network called the student model through knowledge distillation. An overview of the architecture is given in figure 3. We elaborate on each of the components in the sections below.
 
-![Figure 3: A high-level overview of the teacher-student architecture](/_assets/teacher_student.png?raw=true "Image credits https://towardsdatascience.com/knowledge-distillation-simplified-dd4973dbc764")
+![Figure 3: A high-level overview of the teacher-student architecture](assets/teacher_student.png?raw=true "Image credits https://towardsdatascience.com/knowledge-distillation-simplified-dd4973dbc764")
 
 ### Teacher Network
 
@@ -34,11 +34,11 @@ The teacher network is usually a complex and deep network which is fully trained
 
 The architecture of the teacher network is shown in figure 4. It consists of two 1x1 convolutional filters that are used to reduce the number of channels of the input feature maps. Using 1x1 instead of 3x3 kernels reduces the number of parameters by one-ninth, while also increasing the non-linearity of the network without changing the size of the feature maps, thereby deepening the network. This is depicted in figure 5, which shows the network's stage module. Inside each cell, the input is spliced and there is a 1x1 kernel and a 3x3 kernel that perform convolutional operations in parallel. The output is then concatenated and passed on to the next layer. The cell operations can be visualized in figure 6. From the architecture of the teacher network, we can observe that there are six cells that are used to connect the different layers and taking advantage of the feature maps of each layer while also accumulating the characteristics of each channel. This relieves us of the vanishing gradient problem. As part of the convolutional operations, batch normalization and ReLU functions are performed in each layer to further avoid the vanishing gradient and gradient explosion problems while also incresing the degree of non-linearity in the network. At the end of stage 3, a 2x2 maxpooling operation is done followed by a linear layer which fully connects all neurons from the penultimate layer to the classfication layer.
 
-![Figure 4: Architecture of the teacher network](/_assets/Teacher_architecture.png?raw=true)
+![Figure 4: Architecture of the teacher network](assets/Teacher_architecture.jpeg)
 
-![Figure 5: A stage module](/_assets/stage_module.png?raw=true)
+![Figure 5: A stage module](assets/stage_module.jpeg)
 
-![Figure 6: A cell block](/_assets/cell_block.png?raw=true)
+![Figure 6: A cell block](assets/cell_block.png)
 
 ### Student Network
 
