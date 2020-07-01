@@ -115,7 +115,7 @@ class TeacherNetwork(nn.Module):
     for classification.
     '''
 
-    def __init__(self, cell_onnections_in, cell_connections_out, stage_connections_in, stage_connections_out,num_classes):
+    def __init__(self, cell_onnections_in, cell_connections_out, stage_connections_in, stage_connections_out):
         super(TeacherNetwork, self).__init__()
 
         self.stages = nn.ModuleList([Stage(cell_onnections_in,
@@ -126,7 +126,7 @@ class TeacherNetwork(nn.Module):
 
         self.max_pool = torch.nn.MaxPool2d(kernel_size=2, stride=2)
         self.activation_function = nn.ReLU()
-        self.linear = nn.Linear(in_features=131072, out_features=num_classes)
+        self.linear = nn.Linear(in_features=65536, out_features=43)
 
     def forward(self, x):
         stage_results = []

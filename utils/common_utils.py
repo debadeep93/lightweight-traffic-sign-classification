@@ -4,6 +4,7 @@ from torch import nn
 from torch.autograd import Variable as var
 import torchvision.transforms as transforms
 from utils.gtsrb_loader import GTSRB
+import torch.nn.functional as F
 
 from utils.app_constants import ALPHA, T, K, GTSRB_DATASET, CIFAR_10_DATASET
 
@@ -18,11 +19,12 @@ def computeKDLoss(teacher_output, student_output,labels):
     :param labels: ground truth labels
     :return: loss value
     '''
-    softmax = nn.Softmax2d()
-    cec = nn.CrossEntropyLoss()
 
-    loss = (1 - ALPHA) * cec(softmax(student_output, labels)) + 2 * T * T * ALPHA * cec(softmax(student_output / T), softmax(teacher_output / T))
-    return loss;
+    cec = nn.CrossEntropyLoss().cuda()
+    loss = nn.KLDivLoss()(F.log_softmax(student_output/T, dim=1),
+                             F.softmax(teacher_output/T, dim=1)) * (2. * alpha * T * T) + \
+              cec(F.softmax(student_output), labels) * (1. - alpha)
+  return loss;
 
 
 def validate(model,data):
@@ -37,7 +39,6 @@ def validate(model,data):
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda:0" if use_cuda else "cpu")
     torch.backends.cudnn.benchmark = True
-    #model.eval()
     total = 0
     correct = 0
     with torch.no_grad():
@@ -49,48 +50,6 @@ def validate(model,data):
             total += x.size(0)
             correct += torch.sum(pred == labels)
         return  correct*100./total
-
-def load_datasets(dataset_type):
-    '''
-    Method to load the GTSRB Dataset from data folder
-    or specified location. For pre-processing, refer 
-    to dataset_loader file
-    '''
-
-    global train_set, test_set
-    if dataset_type == GTSRB_DATASET:
-        transform = transforms.Compose([
-            transforms.Resize((32, 32)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.3403, 0.3121, 0.3214),
-                                 (0.2724, 0.2608, 0.2669))
-        ])
-
-        train_data = GTSRB(
-            root_dir='./data/', train=True,  transform=transform)
-        test_data = GTSRB(
-            root_dir='./data/', train=False,  transform=transform)
-
-        train_set = torch.utils.data.DataLoader(
-            train_data, batch_size=K, shuffle=True, num_workers=2)
-        test_set = torch.utils.data.DataLoader(
-            test_data, batch_size=K, shuffle=False, num_workers=2)
-
-    elif dataset_type == CIFAR_10_DATASET:
-        transform = transforms.Compose(
-            [transforms.ToTensor(),
-             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        train_data = torchvision.datasets.CIFAR10(root='./data/', train=True,
-                                                  download=True, transform=transform)
-        test_data = torchvision.datasets.CIFAR10(root='./data/', train=False,
-                                                 download=True, transform=transform)
-
-        train_set = torch.utils.data.DataLoader(train_data, batch_size=K,
-                                                shuffle=True, num_workers=2)
-        test_set = torch.utils.data.DataLoader(test_data, batch_size=K,
-                                               shuffle=False, num_workers=2)
-
-    return train_set, test_set
 
 
 def saveModel(epoch, model,optimizer,loss,path):
