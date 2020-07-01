@@ -42,8 +42,15 @@ The architecture of the teacher network is shown in figure 4. It consists of two
 
 ### Student Network
 
+The student network has a simple end-to-end architecture consisting of five convolutional layers and a fully connected layer. Each type of convolutional filter in a convolutional layer are used to extract specific features of an image. Similar to the teacher network, a batch normalization layer and a ReLU layer are added in each convolutional layer to increase the non-linearity in the network. Max-pooling layers are used after the second and fourth convolutional layers to obtain textural features and an average pooling layer is used after the final convolutional layer to preserve the information of the input feature maps. The pooling layers also prevent overfitting and reduce the dimensionality of the feature maps. Finally, there is a fully connected layer or the classifier layer that transfers the feature vectors into a target class probability. The optimizer used to update weights and bias during the training is the Adam optimizer.
 
 ### Knowledge Distillation
+
+Knowledge obtained from the teacher network is transferred to the student network through the process of knowledge distillation. An overview of the knowledge distillation process is given in figure 7. The softened output of the teacher network is used to train the student network on the target datasets. Consider the training sets to be represented as $$D = {X = {x_1, x_2,..., x_n}, {Y = {y_1, y_2,..., y_n}}$$, where $$x$$ and $$y$$ represent an input and a target output respectively. The output of the teacher model and the student model can be represented as $$t = teacher(x)$$ and $$s = student(x)$$ respectively. The student model minimizes the knowledge distillation loss function defined below:
+<div align="center">$$ L_{KD} = (1-\alpha)L_{CE}(y, \sigma(s)) + 2T^2\alpha L_{CE}(\sigma(\frac{t}{T}), \sigma(\frac{s}{T})$$</div>
+where $$\alpha$$ is a hyperparameter that controls the ratio of the two terms and $$Ta$$ is a temperaturue parameter, $$\sigma()$$ is the softmax function  and $$L_{CE}$$ is a standard cross-entropy loss function.
+
+![Figure 7: Knowledge Distillation Process](assets/knowledge_distillation.png)
 
 ### Advantages of the Teacher-Student Architecture
 
@@ -62,6 +69,8 @@ Handling class skew
 ## Inference
 
 ## Future Work
+
+Network Pruning
 
 Data augmentation
 
